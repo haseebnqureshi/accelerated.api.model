@@ -5,18 +5,10 @@ module.exports = function(express, app, models) {
 	------------*/
 
 	var _ = require('underscore');
+	var pg = require('pg');
 
 	//@see http://knexjs.org for knex query builder documentation
-	var knex = require('knex')({
-		client: process.env.DB_CLIENT,
-		connection: {
-			host: process.env.DB_HOST,
-			port: parseInt(process.env.DB_PORT),
-			user: process.env.DB_USER,
-			password: process.env.DB_PASSWORD,
-			database: process.env.DB_DATABASE
-		}
-	});
+	var knex = require('knex')({ client: 'pg' });
 
 	//declare before helpers, so that helpers have access to model
 	var Model;
@@ -24,6 +16,35 @@ module.exports = function(express, app, models) {
 	/*------
 	Helpers
 	------------*/
+
+	/*
+	Instead of relying on KnexJS, we're using the native pg drivers to make
+	DB connections and return data, while using KnexJS for strictly query
+	building.
+	*/
+
+	var query = function(statement, onSuccess, onError) {
+		pg.connect(process.env.DB_CONNECTION_STRING, function(err, client, done) {
+			if (err) { throw err; }
+
+			//execute statement against database, already treated with vars
+			client.query(statement, [], function(err, result) {
+
+				//finished with db connection, may want to pass this through as optional
+				done();
+
+				//handling errors
+				if (err && onError) { 
+					return onError(err);
+				}
+
+				//passing rows through success handler
+				if (onSuccess) {
+					return onSuccess(result.rows);
+				}
+			});
+		});
+	};
 
 	/*
 	General whitelisting, so that we can accept any req.body request and
@@ -103,140 +124,179 @@ module.exports = function(express, app, models) {
 		},
 
 		create: function(args, onSuccess, onError) {
-			knex
+
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.insert(whitelist(args))
 				.returning(safeReturning())
-				.then(function(rows) {
-					if (onSuccess) {
-						return onSuccess(rows);
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		delete: function(id, onSuccess, onError) {
-			knex
+
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.where(this._tablePrimaryIndex, id)
 				.delete()
-				.then(function() {
-					if (onSuccess) {
-						return onSuccess();
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess();
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		deleteWhere: function(where, onSuccess, onError) {
-			knex
+			
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.where(whitelist(where))
 				.delete()
-				.then(function() {
-					if (onSuccess) {
-						return onSuccess();
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess();
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		get: function(id, onSuccess, onError) {
-			knex
+			
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.where(this._tablePrimaryIndex, id)
 				.returning(safeReturning())
-				.then(function(rows) {
-					if (onSuccess) {
-						return onSuccess(rows);
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		getAll: function(onSuccess, onError) {
-			knex
+			
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.returning(safeReturning())
-				.then(function(rows) {
-					if (onSuccess) {
-						return onSuccess(rows);
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			}, function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		getAllWhere: function(where, onSuccess, onError) {
-			knex
+			
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.where(whitelist(where))
 				.returning(safeReturning())
-				.then(function(rows) {
-					if (onSuccess) {
-						return onSuccess(rows);
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		update: function(id, args, onSuccess, onError) {
-			knex
+
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.where(this._tablePrimaryIndex, id)
 				.update(args)
 				.returning(safeReturning())
-				.then(function(rows) {
-					if (onSuccess) {
-						return onSuccess(rows);
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+		
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		},
 
 		updateWhere: function(where, args, onSuccess, onError) {
-			knex
+
+			//crafting query
+			var statement = knex
 				.table(this._tableName)
 				.where(whitelist(where))
 				.update(whitelist(args))
 				.returning(safeReturning())
-				.then(function(rows) {
-					if (onSuccess) {
-						return onSuccess(rows);
-					}
-				})
-				.catch(function(err) {
-					if (err && onError) {
-						return onError(err);
-					}
-				});
+				.toString();
+			
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			})
+			.catch(function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
+			});
 		}
 
 	};
