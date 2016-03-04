@@ -23,7 +23,7 @@ module.exports = function(express, app, models) {
 		//create new resource
 		.post(function(req, res) {
 
-			models[name].create(req.body, function(rows) {
+			models[name]().create(req.body, function(rows) {
 				return res.status(201).send({
 					data: rows[0]
 				});
@@ -38,7 +38,7 @@ module.exports = function(express, app, models) {
 		//getting collection of resource
 		.get(function(req, res) {
 
-			models[name].getAll(function(rows) {
+			models[name]().getAll(function(rows) {
 				return res.status(200).send({
 					data: rows
 				});
@@ -55,7 +55,7 @@ module.exports = function(express, app, models) {
 		//getting individual resource by id
 		.get(function(req, res) {
 
-			models[name].get(req.params.resource_id, function(rows) {
+			models[name]().get(req.params.resource_id, function(rows) {
 
 				//return 404 if no rows were found
 				var status = rows.length > 0 ? 200 : 404;
@@ -73,7 +73,7 @@ module.exports = function(express, app, models) {
 		//updating individual resource by id
 		.put(function(req, res) {
 
-			models[name].update(req.params.resource_id, req.body, function(rows) {
+			models[name]().update(req.params.resource_id, req.body, function(rows) {
 				return res.status(200).send({
 					data: rows
 				});
@@ -88,7 +88,7 @@ module.exports = function(express, app, models) {
 		//deleting individual resource by id
 		.delete(function(req, res) {
 
-			models[name].delete(req.params.resource_id, function() {
+			models[name]().delete(req.params.resource_id, function() {
 				return res.status(200).send({
 					data: []
 				});
@@ -109,7 +109,7 @@ module.exports = function(express, app, models) {
 			where[req.params.property] = req.params.value;
 
 			//executing our query
-			models[name].getAllWhere(where, function(rows) {
+			models[name]().getAllWhere(where, function(rows) {
 
 				//return 404 if no rows were found
 				var status = rows.length > 0 ? 200 : 404;
@@ -131,7 +131,7 @@ module.exports = function(express, app, models) {
 			where[req.params.property] = req.params.value;
 
 			//executing our query
-			models[name].updateWhere(where, req.body, function(rows) {
+			models[name]().updateWhere(where, req.body, function(rows) {
 				return res.status(200).send({
 					data: rows
 				});
@@ -150,7 +150,7 @@ module.exports = function(express, app, models) {
 			where[req.params.property] = req.params.value;
 
 			//executing our query
-			models[name].deleteWhere(where, function() {
+			models[name]().deleteWhere(where, function() {
 				return res.status(200).send({
 					data: []
 				});
