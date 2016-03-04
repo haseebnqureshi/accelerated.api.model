@@ -1,4 +1,21 @@
 
+## Usage
+This module serves as an easy-to-use template for creating any new resource object. It includes both its model and its routes! This module requires certain environment variables to be passed via ```env.json```:
+
+```
+"DB_CLIENT": "pg | mysql"
+"DB_HOST": ""
+"DB_PORT": ""
+"DB_USER": ""
+"DB_PASSWORD": ""
+"DB_DATABASE": ""
+```
+
+## Database Drivers
+For convenience, we've added instant provisioning scripts to locally spin your next postgres or mysql database up. Just look in the directory ```provisioners``` and ```sudo su```, ```bash pg.sh``` or ```bash mysql.sh```.
+
+
+
 ## Quick Start
 This repo is an easy-to-use npm template to create modules for accelerated.api. Simply clone this repo and:
 

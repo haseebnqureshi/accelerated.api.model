@@ -1,7 +1,7 @@
 module.exports = (function() {
 
-	var moduleKey = 'module';
-	var moduleName = 'Module';
+	var moduleKey = 'test';
+	var moduleName = 'test';
 
 	/* Careful - don't modify below unless you're sure! */
 
