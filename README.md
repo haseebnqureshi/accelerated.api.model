@@ -14,6 +14,19 @@ This module serves as an easy-to-use template for creating any new resource obje
 ## Database Drivers
 For convenience, we've added instant provisioning scripts to locally spin your next postgres or mysql database up. Just look in the directory ```provisioners``` and ```sudo su```, ```bash pg.sh``` or ```bash mysql.sh```.
 
+When you do this, refer to the bash script's database connection variables. As a shortcut, use these in your ```env.json```:
+
+```
+"DB_CLIENT": "pg"
+"DB_HOST": "localhost"
+"DB_PORT": "5432"
+"DB_USER": "root"
+"DB_PASSWORD": "root"
+"DB_DATABASE": "api"
+```
+
+## Database Table Creation
+We even provide an easy way to create your database tables and your desired schema, using KnexJS's sql query builder. Simply alter your ```_tableColumns``` variable, per instructions in the comments. Right off the bat, we give you an example ```test``` table with an autoincrementing primary key ```test_id```, and a few string data type columns in addition.
 
 
 ## Quick Start
