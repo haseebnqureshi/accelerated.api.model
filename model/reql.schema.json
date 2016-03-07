@@ -10,11 +10,5 @@
 			"test_lastname"
 		]
 	},
-	"columns": [
-		["test_id", "bigIncrements"],
-		["test_email", "string"],
-		["test_password", "string"],
-		["test_firstname", "string"],
-		["test_lastname", "string"]
-	]
+	"durability": "hard"
 }

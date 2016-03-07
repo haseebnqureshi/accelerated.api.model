@@ -38,11 +38,11 @@ module.exports = function(express, app, models) {
 
 	var getConnectionString = function() {
 		return 'postgres://'
-			+ process.env.DB_USER + ':'
-			+ process.env.DB_PASSWORD + '@'
-			+ process.env.DB_HOST + ':'
-			+ (process.env.DB_PORT || 5432).toString() + '/'
-			+ process.env.DB_DATABASE;
+			+ process.env.PG_USER + ':'
+			+ process.env.PG_PASSWORD + '@'
+			+ process.env.PG_HOST + ':'
+			+ (process.env.PG_PORT || 5432).toString() + '/'
+			+ process.env.PG_DATABASE;
 	};
 
 	/*
@@ -81,20 +81,23 @@ module.exports = function(express, app, models) {
 
 	var whitelist = function(args, scenario) {
 
-		//getting an array of column names
-		var columns = _.map(schema.columns, function(value) {
-			return value[1];
-		});
+		//loading our specified whitelist array
+		var keys = schema.whitelist[scenario];
 
-		//returning appropriate modified args
-		switch (scenario) {
-			default:
-				return _.pick(args, function(value, key) {
-
-					//allow arg to come through, if key matches a column name
-					return (_.indexOf(columns, key) > -1);
-				});	
+		//if keys are undefined, try loading default
+		if (!keys) {
+			keys = schema.whitelist['default'];
 		}
+
+		//if default keys are undefined, we return no args
+		if (!keys) {
+			return {};
+		}
+
+		//cherry-picking arguments whose key is whitelisted
+		return _.pick(args, function(value, key) {
+			return (_.indexOf(keys, key) > -1);
+		});
 	};
 
 	/*
@@ -116,30 +119,37 @@ module.exports = function(express, app, models) {
 	Model = {
 
 		_setup: function(onSuccess, onError) {
-			var that = this;
+
+			console.log('[_setup] Conditionally creating table: "' + schema.table_name + '"');
 
 			//crafting query
 			var statement = knex.schema
 				.createTableIfNotExists(schema.table_name, function(table) {
 
 					//iterates through columns
-					_.each(that._tableColumns, function(column) {
+					_.each(schema.columns, function(column) {
+
+						console.log('[_setup] Modifying query to create column: "' + column[0] + '" with data type: "' + column[1] + '"');
 
 						//creates column with appropriate type
-						table[column[0]](column[1]);
+						table[column[1]](column[0]);
 					});
 				})
 				.toString();
 
-			console.log('... Setting up model by invoking ._setup()');
-			console.log(statement);
-
 			//executing query
 			query(statement, function(rows) {
+
+				console.log('[_setup] Table: "' + schema.table_name + '" is verified to exist');
+
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
 			}, function(err) {
+
+				console.log('[_setup] Failed creating table: "' + schema.table_name + '"');
+				console.log('[_setup]', err);
+
 				if (err && onError) {
 					return onError(err);
 				}
@@ -172,7 +182,7 @@ module.exports = function(express, app, models) {
 			//crafting query
 			var statement = knex
 				.table(schema.table_name)
-				.where(schema.primary_index, id)
+				.where(schema.primary_key, id)
 				.delete()
 				.toString();
 
@@ -214,8 +224,8 @@ module.exports = function(express, app, models) {
 			//crafting query
 			var statement = knex
 				.table(schema.table_name)
-				.where(schema.primary_index, id)
-				.orderBy(schema.primary_index, 'desc')
+				.where(schema.primary_key, id)
+				.orderBy(schema.primary_key, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -236,7 +246,7 @@ module.exports = function(express, app, models) {
 			//crafting query
 			var statement = knex
 				.table(schema.table_name)
-				.orderBy(schema.primary_index, 'desc')
+				.orderBy(schema.primary_key, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -258,7 +268,7 @@ module.exports = function(express, app, models) {
 			var statement = knex
 				.table(schema.table_name)
 				.where(whitelist(where))
-				.orderBy(schema.primary_index, 'desc')
+				.orderBy(schema.primary_key, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -279,7 +289,7 @@ module.exports = function(express, app, models) {
 			//crafting query
 			var statement = knex
 				.table(schema.table_name)
-				.where(schema.primary_index, id)
+				.where(schema.primary_key, id)
 				.update(args)
 				.returning(safeReturning())
 				.toString();

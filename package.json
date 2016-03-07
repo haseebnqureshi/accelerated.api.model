@@ -1,7 +1,7 @@
 {
   "name": "accelerated.api.model",
-  "version": "1.0.1",
-  "description": "Model template for accelerated.api with KnexJS.",
+  "version": "1.0.2",
+  "description": "Model template for accelerated.api w/full CRUD abilities.",
   "main": "index.js",
   "scripts": {
     "test": "npm -v"
