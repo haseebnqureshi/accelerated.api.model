@@ -26,7 +26,23 @@ When you do this, refer to the bash script's database connection variables. As a
 ```
 
 ## Database Table Creation
-We even provide an easy way to create your database tables and your desired schema, using KnexJS's sql query builder. Simply alter your ```_tableColumns``` variable, per instructions in the comments. Right off the bat, we give you an example ```test``` table with an autoincrementing primary key ```test_id```, and a few string data type columns in addition.
+We even provide an easy way to create your database tables and your desired schema, using KnexJS's sql query builder. Simply alter your ```{DB_CLIENT}.schema.json``` with your table information. Three parameters are essential: 
+
+```
+{
+	"table_name": "task",
+	"primary_index": "task_id",
+	"columns": {
+		"task_id": "bigIncrements",
+		"task_field": "string"
+	}
+}
+```
+Then run your node application with ```setup``` as an argument, and accelerated conditionally creates your table if it's not already created:
+
+```
+node index.js setup
+```
 
 
 ## Quick Start

@@ -7,9 +7,13 @@ module.exports = function(express, app, models) {
 	var _ = require('underscore');
 	var pg = require('pg');
 	var types = require('pg').types;
+	var path = require('path');
 
 	//@see http://knexjs.org for knex query builder documentation
 	var knex = require('knex')({ client: 'pg' });
+
+	//loading our table schema
+	var schema = require(path.join(__dirname, process.env.DB_CLIENT + '.schema.json'));
 
 	//declare before helpers, so that helpers have access to model
 	var Model;
@@ -78,7 +82,7 @@ module.exports = function(express, app, models) {
 	var whitelist = function(args, scenario) {
 
 		//getting an array of column names
-		var columns = _.map(Model._tableColumns, function(value) {
+		var columns = _.map(schema.columns, function(value) {
 			return value[1];
 		});
 
@@ -111,37 +115,12 @@ module.exports = function(express, app, models) {
 
 	Model = {
 
-		/*	
-		Modify the folowing _tableName, _tableColumns, and _tablePrimaryIndex
-		so standard CRUD operations will operate as expected, according to 
-		your database table.
-		*/
-
-		_tableName: 'test',
-
-		_tableColumns: [
-
-			/*
-			First array value represents data type
-			Second array value represents column name
-			*/
-
-			[ 'bigIncrements', 'test_id' ],
-			[ 'string', 'test_email' ],
-			[ 'string', 'test_password' ],
-			[ 'string', 'test_firstname' ],
-			[ 'string', 'test_lastname' ]
-		],
-
-		//used for general select queries
-		_tablePrimaryIndex: 'test_id',
-
 		_setup: function(onSuccess, onError) {
 			var that = this;
 
 			//crafting query
 			var statement = knex.schema
-				.createTableIfNotExists(this._tableName, function(table) {
+				.createTableIfNotExists(schema.table_name, function(table) {
 
 					//iterates through columns
 					_.each(that._tableColumns, function(column) {
@@ -171,7 +150,7 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
+				.table(schema.table_name)
 				.insert(whitelist(args))
 				.returning(safeReturning())
 				.toString();
@@ -192,8 +171,8 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
-				.where(this._tablePrimaryIndex, id)
+				.table(schema.table_name)
+				.where(schema.primary_index, id)
 				.delete()
 				.toString();
 
@@ -213,7 +192,7 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
+				.table(schema.table_name)
 				.where(whitelist(where))
 				.delete()
 				.toString();
@@ -234,9 +213,9 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
-				.where(this._tablePrimaryIndex, id)
-				.orderBy(this._tablePrimaryIndex, 'desc')
+				.table(schema.table_name)
+				.where(schema.primary_index, id)
+				.orderBy(schema.primary_index, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -256,8 +235,8 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
-				.orderBy(this._tablePrimaryIndex, 'desc')
+				.table(schema.table_name)
+				.orderBy(schema.primary_index, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -277,9 +256,9 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
+				.table(schema.table_name)
 				.where(whitelist(where))
-				.orderBy(this._tablePrimaryIndex, 'desc')
+				.orderBy(schema.primary_index, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -299,8 +278,8 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
-				.where(this._tablePrimaryIndex, id)
+				.table(schema.table_name)
+				.where(schema.primary_index, id)
 				.update(args)
 				.returning(safeReturning())
 				.toString();
@@ -321,7 +300,7 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(this._tableName)
+				.table(schema.table_name)
 				.where(whitelist(where))
 				.update(whitelist(args))
 				.returning(safeReturning())

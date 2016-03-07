@@ -1,0 +1,11 @@
+{
+	"table_name": "test",
+	"primary_index": "test_id",
+	"columns": {
+		"test_id": "bigIncrements",
+		"test_email": "string",
+		"test_password": "string",
+		"test_firstname": "string",
+		"test_lastname": "string"
+	}
+}
