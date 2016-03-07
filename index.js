@@ -19,6 +19,16 @@ module.exports = (function() {
 	
 	};
 
+	/* Call model's _setup if argument is passed */
+
+	var _ = require('underscore');
+
+	if (_.indexOf(process.argv, 'setup') > -1) {
+
+		Module.model()()._setup();
+
+	}
+
 	return Module;
 
 })();

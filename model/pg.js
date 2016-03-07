@@ -6,6 +6,7 @@ module.exports = function(express, app, models) {
 
 	var _ = require('underscore');
 	var pg = require('pg');
+	var types = require('pg').types;
 
 	//@see http://knexjs.org for knex query builder documentation
 	var knex = require('knex')({ client: 'pg' });
@@ -18,13 +19,36 @@ module.exports = function(express, app, models) {
 	------------*/
 
 	/*
+	Setting types parsing for our pg queries, so that any data coming 
+	back is respecting our column data types.
+	*/
+
+	types.setTypeParser(20, function(val) {
+		return parseInt(val);
+	});
+
+	/* 
+	Using the process.env variables, we create our PG connection string
+	that gets used to execute queries against.
+	*/
+
+	var getConnectionString = function() {
+		return 'postgres://'
+			+ process.env.DB_USER + ':'
+			+ process.env.DB_PASSWORD + '@'
+			+ process.env.DB_HOST + ':'
+			+ (process.env.DB_PORT || 5432).toString() + '/'
+			+ process.env.DB_DATABASE;
+	};
+
+	/*
 	Instead of relying on KnexJS, we're using the native pg drivers to make
 	DB connections and return data, while using KnexJS for strictly query
 	building.
 	*/
 
 	var query = function(statement, onSuccess, onError) {
-		pg.connect(process.env.DB_CONNECTION_STRING, function(err, client, done) {
+		pg.connect(getConnectionString(), function(err, client, done) {
 			if (err) { throw err; }
 
 			//execute statement against database, already treated with vars
@@ -112,14 +136,34 @@ module.exports = function(express, app, models) {
 		//used for general select queries
 		_tablePrimaryIndex: 'test_id',
 
-		_setup: function() {
+		_setup: function(onSuccess, onError) {
 			var that = this;
-			knex.schema.createTable(this._tableName, function(table) {
 
-				//iterates through columns, creates column with appropriate type
-				_.each(that._tableColumns, function(column) {
-					table[column[0]](column[1]);
-				});
+			//crafting query
+			var statement = knex.schema
+				.createTableIfNotExists(this._tableName, function(table) {
+
+					//iterates through columns
+					_.each(that._tableColumns, function(column) {
+
+						//creates column with appropriate type
+						table[column[0]](column[1]);
+					});
+				})
+				.toString();
+
+			console.log('... Setting up model by invoking ._setup()');
+			console.log(statement);
+
+			//executing query
+			query(statement, function(rows) {
+				if (onSuccess) {
+					return onSuccess(rows);
+				}
+			}, function(err) {
+				if (err && onError) {
+					return onError(err);
+				}
 			});
 		},
 
@@ -137,8 +181,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}
@@ -159,8 +202,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess();
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}
@@ -181,8 +223,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess();
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}
@@ -195,6 +236,7 @@ module.exports = function(express, app, models) {
 			var statement = knex
 				.table(this._tableName)
 				.where(this._tablePrimaryIndex, id)
+				.orderBy(this._tablePrimaryIndex, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -203,8 +245,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}
@@ -216,6 +257,7 @@ module.exports = function(express, app, models) {
 			//crafting query
 			var statement = knex
 				.table(this._tableName)
+				.orderBy(this._tablePrimaryIndex, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -237,6 +279,7 @@ module.exports = function(express, app, models) {
 			var statement = knex
 				.table(this._tableName)
 				.where(whitelist(where))
+				.orderBy(this._tablePrimaryIndex, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -245,8 +288,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}
@@ -268,8 +310,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}
@@ -291,8 +332,7 @@ module.exports = function(express, app, models) {
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
-			})
-			.catch(function(err) {
+			}, function(err) {
 				if (err && onError) {
 					return onError(err);
 				}

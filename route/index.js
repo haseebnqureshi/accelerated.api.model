@@ -37,7 +37,6 @@ module.exports = function(express, app, models) {
 
 		//getting collection of resource
 		.get(function(req, res) {
-
 			models[name]().getAll(function(rows) {
 				return res.status(200).send({
 					data: rows
