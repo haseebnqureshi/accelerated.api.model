@@ -13,7 +13,7 @@ module.exports = function() {
     module.extendModel(function(model, express, app, models) {
 
     	// choosing to keep model isolated into another commonjs module
-		model = require('./model')(model, express, app, models);    	
+		model = require('./model.js')(model, express, app, models);    	
 
         // modify model to include user create, retrieve, update, and delete methods
         return model;
@@ -24,7 +24,7 @@ module.exports = function() {
     module.appendRoute(function(express, app, models) {
 
     	// choosing to keep model isolated into another commonjs module
-		app = require('./route')(express, app, models, module.key);    	
+		app = require('./route.js')(express, app, models, module.key);    	
 
         // modify app to include user CRUD routes 
         return app;
