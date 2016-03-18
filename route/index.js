@@ -1,16 +1,16 @@
-module.exports = function(express, app, models) {
+module.exports = function(express, app, models, moduleKey) {
 
 	/*------
 	Dependencies
 	------------*/
 
-	var name = 'test';
+	var model = models[moduleKey](express, app, models);
 
 	/*------
 	Helpers
 	------------*/
 
-
+	var logger = app.get('logger');
 
 	/*------
 	Routes
@@ -22,12 +22,14 @@ module.exports = function(express, app, models) {
 
 		//create new resource
 		.post(function(req, res) {
-
-			models[name]().create(req.body, function(rows) {
+			logger.debug('req.body', req.body);
+			model.create(req.body, function(rows) {
+				logger.debug('rows', rows);
 				return res.status(201).send({
 					data: rows[0]
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -37,11 +39,13 @@ module.exports = function(express, app, models) {
 
 		//getting collection of resource
 		.get(function(req, res) {
-			models[name]().getAll(function(rows) {
+			model.getAll(function(rows) {
+				logger.debug('rows', rows);
 				return res.status(200).send({
 					data: rows
 				});
 			}, function(err) {
+				logger.error(err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -53,8 +57,10 @@ module.exports = function(express, app, models) {
 
 		//getting individual resource by id
 		.get(function(req, res) {
+			logger.debug('req.params', req.params);
 
-			models[name]().get(req.params.resource_id, function(rows) {
+			model.get(req.params.resource_id, function(rows) {
+				logger.debug('rows', rows);
 
 				//return 404 if no rows were found
 				var status = rows.length > 0 ? 200 : 404;
@@ -62,6 +68,7 @@ module.exports = function(express, app, models) {
 					data: rows
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -71,12 +78,16 @@ module.exports = function(express, app, models) {
 
 		//updating individual resource by id
 		.put(function(req, res) {
+			logger.debug('req.params', req.params);
+			logger.debug('req.body', req.body);
 
-			models[name]().update(req.params.resource_id, req.body, function(rows) {
+			model.update(req.params.resource_id, req.body, function(rows) {
+				logger.debug('rows', rows);
 				return res.status(200).send({
 					data: rows
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -86,12 +97,14 @@ module.exports = function(express, app, models) {
 
 		//deleting individual resource by id
 		.delete(function(req, res) {
+			logger.debug('req.params', req.params);
 
-			models[name]().delete(req.params.resource_id, function() {
+			model.delete(req.params.resource_id, function() {
 				return res.status(200).send({
 					data: []
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -102,13 +115,16 @@ module.exports = function(express, app, models) {
 	router.route('/:property/:value')
 
 		.get(function(req, res) {
+			logger.debug('req.params', req.params);
 
 			//constructing our where object
 			var where = {};
 			where[req.params.property] = req.params.value;
+			logger.debug('where', where);
 
 			//executing our query
-			models[name]().getAllWhere(where, function(rows) {
+			model.getAllWhere(where, function(rows) {
+				logger.debug('rows', rows);
 
 				//return 404 if no rows were found
 				var status = rows.length > 0 ? 200 : 404;
@@ -116,6 +132,7 @@ module.exports = function(express, app, models) {
 					data: rows
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -124,17 +141,22 @@ module.exports = function(express, app, models) {
 		})
 
 		.put(function(req, res) {
+			logger.debug('req.params', req.params);
+			logger.debug('req.body', req.body);
 
 			//constructing our where object
 			var where = {};
 			where[req.params.property] = req.params.value;
+			logger.debug('where', where);
 
 			//executing our query
-			models[name]().updateWhere(where, req.body, function(rows) {
+			model.updateWhere(where, req.body, function(rows) {
+				logger.debug('rows', rows);
 				return res.status(200).send({
 					data: rows
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -143,17 +165,20 @@ module.exports = function(express, app, models) {
 		})
 
 		.delete(function(req, res) {
+			logger.debug('req.params', req.params);
 
 			//constructing our where object
 			var where = {};
 			where[req.params.property] = req.params.value;
+			logger.debug('where', where);
 
 			//executing our query
-			models[name]().deleteWhere(where, function() {
+			model.deleteWhere(where, function() {
 				return res.status(200).send({
 					data: []
 				});
 			}, function(err) {
+				logger.error('err', err);
 				return res.status(500).send({
 					data: [],
 					error: err
@@ -161,7 +186,7 @@ module.exports = function(express, app, models) {
 			});
 		});
 
-	app.use('/test', router);
+	app.use('/' + moduleKey, router);
 
 	/*------
 	Returning App (ensuring app waterfalls)

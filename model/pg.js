@@ -22,6 +22,8 @@ module.exports = function(express, app, models) {
 	Helpers
 	------------*/
 
+	var logger = app.get('logger');
+
 	/*
 	Setting types parsing for our pg queries, so that any data coming 
 	back is respecting our column data types.
@@ -54,6 +56,8 @@ module.exports = function(express, app, models) {
 	var query = function(statement, onSuccess, onError) {
 		pg.connect(getConnectionString(), function(err, client, done) {
 			if (err) { throw err; }
+
+			logger.info(statement);
 
 			//execute statement against database, already treated with vars
 			client.query(statement, [], function(err, result) {

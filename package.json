@@ -1,6 +1,6 @@
 {
   "name": "accelerated.api.model",
-  "version": "1.0.2",
+  "version": "1.1.1",
   "description": "Model template for accelerated.api w/full CRUD abilities.",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/haseebnqureshi/accelerated.api.model#readme",
   "dependencies": {
+    "accelerated.api.module": "^1.1.1",
     "knex": "^0.10.0",
     "underscore": "^1.8.3"
   }

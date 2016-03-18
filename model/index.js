@@ -1,4 +1,4 @@
-module.exports = function(express, app, models) {
+module.exports = function(model, express, app, models) {
 
 	/*------
 	Dependencies
@@ -16,10 +16,9 @@ module.exports = function(express, app, models) {
 	*/
 
 	var filepath = path.join(__dirname, process.env.DB_CLIENT + '.js');
-	var Model;
 
 	try {
-		Model = require(filepath);
+		model = require(filepath);
 	}
 	catch(err) {
 		throw err;
@@ -29,6 +28,6 @@ module.exports = function(express, app, models) {
 	Returning Model
 	------------*/
 
-	return Model;
+	return model;
 
 };

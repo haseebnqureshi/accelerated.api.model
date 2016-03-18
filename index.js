@@ -1,34 +1,36 @@
-module.exports = (function() {
+module.exports = function() {
 
-	var moduleKey = 'test';
-	var moduleName = 'test';
+    // you can require this or other modules using accelerated.api.module 
+    var module = new require('accelerated.api.module')();
+    
+    // set your module's key for reference by middlwares, models, and routes 
+    module.setKey('model');
 
-	/* Careful - don't modify below unless you're sure! */
+    // set your module's name for logging output 
+    module.setName('Model Module');
 
-	var Module = {
+    // you can choose to extend your module's model
+    module.extendModel(function(model, express, app, models) {
 
-		key: moduleKey,
+    	// choosing to keep model isolated into another commonjs module
+		model = require('./model')(model, express, app, models);    	
 
-		name: moduleName,
+        // modify model to include user create, retrieve, update, and delete methods
+        return model;
 
-		middleware: require('./middleware'),
+    });
 
-		model: require('./model'),
+    // you can choose to extend your module's routes
+    module.appendRoute(function(express, app, models) {
 
-		route: require('./route')
-	
-	};
+    	// choosing to keep model isolated into another commonjs module
+		app = require('./route')(express, app, models, module.key);    	
 
-	/* Call model's _setup if argument is passed */
+        // modify app to include user CRUD routes 
+        return app;
 
-	var _ = require('underscore');
+    });
 
-	if (_.indexOf(process.argv, 'setup') > -1) {
+    return module;
 
-		Module.model()()._setup();
-
-	}
-
-	return Module;
-
-})();
+};
