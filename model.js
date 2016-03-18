@@ -7,6 +7,33 @@ module.exports = function(model, express, app, models) {
 	var path = require('path');
 
 	/*------
+	Driver Loader
+	------------*/
+
+	/*
+	Just in case this gets attempted to run before any rethinkdb or 
+	postgresql provisioning has occured, we safely run our provisioning
+	scripts, so that the appropriate drivers exist.
+	*/
+
+	try {
+		var package = process.env.DB_CLIENT;
+		if (package == 'reql') { 
+			package = 'rethinkdb';
+		}
+		require(package);
+	}
+	catch(err) {
+		var path = require('path');
+		var child = require('child_process');
+		var filepath = path.join(__dirname, process.env.DB_CLIENT + '.sh');
+		var command = 'sudo bash ' + filepath;
+		child.exec(command);
+		console.log('Sit tight! Accelerated is installing your required database libraries. (In the future, we\'ll have a progress bar or something to that effect.)');
+		process.exit(1);
+	}
+
+	/*------
 	Switcher
 	------------*/
 
