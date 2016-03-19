@@ -1,10 +1,10 @@
-module.exports = function(express, app, models, moduleKey) {
+module.exports = function(express, app, models, settings) {
 
 	/*------
 	Dependencies
 	------------*/
 
-	var model = models[moduleKey](express, app, models);
+	var model = models[settings.key](express, app, models);
 
 	/*------
 	Helpers
@@ -186,7 +186,7 @@ module.exports = function(express, app, models, moduleKey) {
 			});
 		});
 
-	app.use('/' + moduleKey, router);
+	app.use('/' + settings.key, router);
 
 	/*------
 	Returning App (ensuring app waterfalls)
