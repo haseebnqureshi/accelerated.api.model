@@ -5,6 +5,7 @@ module.exports = function(model, express, app, models) {
 	------------*/
 
 	var path = require('path');
+    var _ = require('underscore');
 
 	/*------
 	Driver Loader
@@ -50,6 +51,11 @@ module.exports = function(model, express, app, models) {
 	catch(err) {
 		throw err;
 	}
+
+    //call model's _setup if argument is passed 
+    if (_.indexOf(process.argv, 'setup') > -1) {
+        model()._setup();
+    }
 
 	/*------
 	Returning Model
