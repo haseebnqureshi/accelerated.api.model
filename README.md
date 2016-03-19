@@ -18,7 +18,7 @@ Why start with PostgreSQL and RethinkDB? In our humble opinion, PostgreSQL is My
 
 
 ## Database Drivers
-For convenience, we've added instant provisioning scripts to locally spin your next postgres or mysql database up. Just look in the directory ```provisioners``` and ```sudo su```, ```bash pg.sh``` or ```bash reql.sh```.
+For convenience, we've added instant provisioning scripts to locally spin your next postgres or mysql database up. Simply ```sudo su```, ```bash pg.sh``` or ```bash reql.sh```.
 
 When you do this, refer to the bash script's database connection variables. As a shortcut, use these in your ```env.json```:
 
@@ -63,7 +63,7 @@ node index.js setup
 
 var api = require('accelerated.api');
 
-var apiModel = new require('acceleratd.api.model')();
+var apiModel = require('acceleratd.api.model').use();
 
 api.useMiddlewares([ 
 	[apiModel.key, apiModel.middleware]
