@@ -1,4 +1,4 @@
-module.exports = function(express, app, models) {
+module.exports = function(model, express, app, models, settings) {
 
 	/*------
 	Dependencies
@@ -11,12 +11,6 @@ module.exports = function(express, app, models) {
 
 	//@see http://knexjs.org for knex query builder documentation
 	var knex = require('knex')({ client: 'pg' });
-
-	//loading our table schema
-	var schema = require(path.join(__dirname, process.env.DB_CLIENT + '.schema.json'));
-
-	//declare before helpers, so that helpers have access to model
-	var Model;
 
 	/*------
 	Helpers
@@ -40,11 +34,11 @@ module.exports = function(express, app, models) {
 
 	var getConnectionString = function() {
 		return 'postgres://'
-			+ process.env.PG_USER + ':'
-			+ process.env.PG_PASSWORD + '@'
-			+ process.env.PG_HOST + ':'
+			+ (process.env.PG_USER || 'root') + ':'
+			+ (process.env.PG_PASSWORD || 'root') + '@'
+			+ (process.env.PG_HOST || 'localhost') + ':'
 			+ (process.env.PG_PORT || 5432).toString() + '/'
-			+ process.env.PG_DATABASE;
+			+ (process.env.PG_DATABASE || 'api');
 	};
 
 	/*
@@ -86,11 +80,11 @@ module.exports = function(express, app, models) {
 	var whitelist = function(args, scenario) {
 
 		//loading our specified whitelist array
-		var keys = schema.whitelist[scenario];
+		var keys = settings.schema.whitelist[scenario];
 
 		//if keys are undefined, try loading default
 		if (!keys) {
-			keys = schema.whitelist['default'];
+			keys = settings.schema.whitelist['default'];
 		}
 
 		//if default keys are undefined, we return no args
@@ -120,18 +114,18 @@ module.exports = function(express, app, models) {
 	Defining Model
 	------------*/
 
-	Model = {
+	model = {
 
 		_setup: function(onSuccess, onError) {
 
-			console.log('[_setup] Conditionally creating table: "' + schema.table_name + '"');
+			console.log('[_setup] Conditionally creating table: "' + settings.schema.table_name + '"');
 
 			//crafting query
-			var statement = knex.schema
-				.createTableIfNotExists(schema.table_name, function(table) {
+			var statement = knex.settings.schema
+				.createTableIfNotExists(settings.schema.table_name, function(table) {
 
 					//iterates through columns
-					_.each(schema.columns, function(column) {
+					_.each(settings.schema.columns, function(column) {
 
 						console.log('[_setup] Modifying query to create column: "' + column[0] + '" with data type: "' + column[1] + '"');
 
@@ -144,14 +138,14 @@ module.exports = function(express, app, models) {
 			//executing query
 			query(statement, function(rows) {
 
-				console.log('[_setup] Table: "' + schema.table_name + '" is verified to exist');
+				console.log('[_setup] Table: "' + settings.schema.table_name + '" is verified to exist');
 
 				if (onSuccess) {
 					return onSuccess(rows);
 				}
 			}, function(err) {
 
-				console.log('[_setup] Failed creating table: "' + schema.table_name + '"');
+				console.log('[_setup] Failed creating table: "' + settings.schema.table_name + '"');
 				console.log('[_setup]', err);
 
 				if (err && onError) {
@@ -164,7 +158,7 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
+				.table(settings.schema.table_name)
 				.insert(whitelist(args))
 				.returning(safeReturning())
 				.toString();
@@ -185,8 +179,8 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
-				.where(schema.primary_key, id)
+				.table(settings.schema.table_name)
+				.where(settings.schema.primary_key, id)
 				.delete()
 				.toString();
 
@@ -206,7 +200,7 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
+				.table(settings.schema.table_name)
 				.where(whitelist(where))
 				.delete()
 				.toString();
@@ -227,9 +221,9 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
-				.where(schema.primary_key, id)
-				.orderBy(schema.primary_key, 'desc')
+				.table(settings.schema.table_name)
+				.where(settings.schema.primary_key, id)
+				.orderBy(settings.schema.primary_key, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -249,8 +243,8 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
-				.orderBy(schema.primary_key, 'desc')
+				.table(settings.schema.table_name)
+				.orderBy(settings.schema.primary_key, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -270,9 +264,9 @@ module.exports = function(express, app, models) {
 			
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
+				.table(settings.schema.table_name)
 				.where(whitelist(where))
-				.orderBy(schema.primary_key, 'desc')
+				.orderBy(settings.schema.primary_key, 'desc')
 				.returning(safeReturning())
 				.toString();
 
@@ -292,8 +286,8 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
-				.where(schema.primary_key, id)
+				.table(settings.schema.table_name)
+				.where(settings.schema.primary_key, id)
 				.update(args)
 				.returning(safeReturning())
 				.toString();
@@ -314,7 +308,7 @@ module.exports = function(express, app, models) {
 
 			//crafting query
 			var statement = knex
-				.table(schema.table_name)
+				.table(settings.schema.table_name)
 				.where(whitelist(where))
 				.update(whitelist(args))
 				.returning(safeReturning())
@@ -338,6 +332,6 @@ module.exports = function(express, app, models) {
 	Returning Model
 	------------*/
 
-	return Model;
+	return model;
 
 };

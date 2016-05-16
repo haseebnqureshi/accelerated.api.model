@@ -1,4 +1,4 @@
-module.exports = function(express, app, models) {
+module.exports = function(model, express, app, models, settings) {
 
 	/*------
 	Dependencies
@@ -7,12 +7,6 @@ module.exports = function(express, app, models) {
 	var _ = require('underscore');
 	var r = require('rethinkdb');
 	var path = require('path');
-
-	//loading our table schema
-	var schema = require(path.join(__dirname, process.env.DB_CLIENT + '.schema.json'));
-
-	//declare before helpers, so that helpers have access to model
-	var Model;
 
 	/*------
 	Helpers
@@ -26,9 +20,9 @@ module.exports = function(express, app, models) {
 
 	var query = function(connectionCallback) {
 		r.connect({
-			host: process.env.RETHINKDB_HOST,
-			port: process.env.RETHINKDB_PORT,
-			db: process.env.RETHINKDB_DB
+			host: (process.env.RETHINKDB_HOST || 'localhost'),
+			port: (process.env.RETHINKDB_PORT || 9090),
+			db: (process.env.RETHINKDB_DB || 'test')
 		}, function(err, connection) {
 			if (err) {
 				throw err;
@@ -47,11 +41,11 @@ module.exports = function(express, app, models) {
 	var whitelist = function(args, scenario) {
 
 		//loading our specified whitelist array
-		var keys = schema.whitelist[scenario];
+		var keys = settings.schema.whitelist[scenario];
 
 		//if keys are undefined, try loading default
 		if (!keys) {
-			keys = schema.whitelist['default'];
+			keys = settings.schema.whitelist['default'];
 		}
 
 		//if default keys are undefined, we return no args
@@ -69,31 +63,31 @@ module.exports = function(express, app, models) {
 	Defining Model
 	------------*/
 
-	Model = {
+	model = {
 
 		_setup: function(onSuccess, onError) {
 
-			console.log('[_setup] Conditionally creating table: "' + schema.table_name + '"');
+			console.log('[_setup] Conditionally creating table: "' + settings.schema.table_name + '"');
 
 			//list all tables and see if our table has been created
 			query(function(connection) {
 				r.tableList()
 					.run(connection, function(err, result) {
-						var tableExists = _.indexOf(result, schema.table_name) > -1 ? true : false;
+						var tableExists = _.indexOf(result, settings.schema.table_name) > -1 ? true : false;
 
-						//if table doesn't exist, we create our table using loaded schema options
+						//if table doesn't exist, we create our table using loaded settings.schema options
 						if (!tableExists) {
 
-							console.log('[_setup] Table: "' + schema.table_name + '" does not exist');
+							console.log('[_setup] Table: "' + settings.schema.table_name + '" does not exist');
 
-							r.tableCreate(schema.table_name, {
-								primaryKey: schema.primary_key || 'id',
-								durability: schema.durability || 'hard'
+							r.tableCreate(settings.schema.table_name, {
+								primaryKey: settings.schema.primary_key || 'id',
+								durability: settings.schema.durability || 'hard'
 							})
 							.run(connection, function(err, result) {
 								if (err) {
 
-									console.log('[_setup] Failed to create table: "' + schema.table_name + '"');
+									console.log('[_setup] Failed to create table: "' + settings.schema.table_name + '"');
 
 									if (onError) {
 										return onError(err);
@@ -101,7 +95,7 @@ module.exports = function(express, app, models) {
 								}
 								if (result.tables_created > 0) {
 
-									console.log('[_setup] Successfully created table: "' + schema.table_name + '"');
+									console.log('[_setup] Successfully created table: "' + settings.schema.table_name + '"');
 
 									if (onSuccess) {
 										return onSuccess(result);
@@ -111,7 +105,7 @@ module.exports = function(express, app, models) {
 						}
 						else {
 
-							console.log('[_setup] Table: "' + schema.table_name + '" is verified to exist');
+							console.log('[_setup] Table: "' + settings.schema.table_name + '" is verified to exist');
 
 						}
 					});
@@ -120,7 +114,7 @@ module.exports = function(express, app, models) {
 
 		create: function(args, onSuccess, onError) {
 			query(function(connection) {
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.insert(whitelist(args), {
 						durability: 'hard',
 						returnChanges: 'always',
@@ -148,10 +142,10 @@ module.exports = function(express, app, models) {
 
 				//ensuring filter is run with primary_key and vlue
 				var where = {};
-				where[schema.primary_key] = id;
+				where[settings.schema.primary_key] = id;
 
 				//executing query
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.filter(where)
 					.delete({
 						durability: 'hard',
@@ -175,7 +169,7 @@ module.exports = function(express, app, models) {
 
 		deleteWhere: function(where, onSuccess, onError) {
 			query(function(connection) {
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.filter(whitelist(where))
 					.delete({
 						durability: 'hard',
@@ -202,10 +196,10 @@ module.exports = function(express, app, models) {
 
 				//ensuring filter is run with primary_key and vlue
 				var where = {};
-				where[schema.primary_key] = id;
+				where[settings.schema.primary_key] = id;
 
 				//executing query
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.filter(where)
 					.run(connection, function(err, cursor) {
 						if (err && onError) { 
@@ -225,7 +219,7 @@ module.exports = function(express, app, models) {
 
 		getAll: function(onSuccess, onError) {
 			query(function(connection) {
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.run(connection, function(err, cursor) {
 						if (err && onError) { 
 							return onError(err);
@@ -244,7 +238,7 @@ module.exports = function(express, app, models) {
 
 		getAllWhere: function(where, onSuccess, onError) {
 			query(function(connection) {
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.filter(whitelist(where))
 					.run(connection, function(err, cursor) {
 						if (err && onError) { 
@@ -267,10 +261,10 @@ module.exports = function(express, app, models) {
 
 				//ensuring filter is run with primary_key and vlue
 				var where = {};
-				where[schema.primary_key] = id;
+				where[settings.schema.primary_key] = id;
 
 				//executing query
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.filter(where)
 					.update(whitelist(args), {
 						durability: 'hard',
@@ -293,7 +287,7 @@ module.exports = function(express, app, models) {
 
 		updateWhere: function(where, args, onSuccess, onError) {
 			query(function(connection) {
-				r.table(schema.table_name)
+				r.table(settings.schema.table_name)
 					.filter(whitelist(where))
 					.update(whitelist(args), {
 						durability: 'hard',
@@ -322,6 +316,6 @@ module.exports = function(express, app, models) {
 	Returning Model
 	------------*/
 
-	return Model;
+	return model;
 
 };

@@ -4,7 +4,7 @@ module.exports = function(express, app, models, settings) {
 	Dependencies
 	------------*/
 
-	var model = models[settings.key](express, app, models);
+	var model = models[settings.key](express, app, models, settings);
 
 	/*------
 	Helpers
