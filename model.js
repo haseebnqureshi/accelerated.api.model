@@ -38,15 +38,14 @@ module.exports = function(model, express, app, models, settings) {
 
 		/*
 		Since something failed while loading db drivers, we make sure 
-		to install our specific node driver.
+		to let user know what actions to take, in installing the right
+		driver.
 		*/
 
-		var path = require('path');
-		var filepath = path.join(__dirname, 'install-' + (process.env.DB_CLIENT || 'reql') + '.sh');
-		require('child_process').exec('sudo bash ' + filepath);
-
-		//let you know
-		console.log('Sit tight! Accelerated is installing your required database libraries. (In the future, we\'ll have a progress bar or something to that effect.)');
+		console.log("Looks like you don't have the right db drivers and/or node drivers needed! No problem, here's how to fix it. Simply copy and paste the following code into terminal, while in your project directory path:");
+		console.log("");
+		console.log("cd node_modules/accelerated.api.model && npm run-script " + (process.env.DB_CLIENT || 'reql') + " ./../../ && cd ../../");
+		console.log("");
 		process.exit(1);
 	}
 
@@ -79,11 +78,9 @@ module.exports = function(model, express, app, models, settings) {
 		when inheriting this module.
 		*/
 
-		console.log({
-			message: 'Looks like there wasn\'t a valid schema at your schemaFilepath! Please define "schemaFilepath" in your module settings when inheriting this module.',
-			"settings.schemaFilepath": settings.schemaFilepath,
-			err: err
-		});
+		console.log("Looks like there wasn't a valid schema at schemaFilepath! Make sure 'schemaFilepath' is defined in your module settings when inheriting this module, and that it has valid JSON.");
+		console.log('settings.schemaFilepath', settings.schemaFilepath);
+		console.log(err);
 		process.exit(1);
 	}
 
@@ -96,7 +93,7 @@ module.exports = function(model, express, app, models, settings) {
 	error if something went wrong.
 	*/
 
-	var filepath = path.join(__dirname, 'model-' + process.env.DB_CLIENT + '.js');
+	var filepath = path.join(__dirname, 'model-' + (process.env.DB_CLIENT || 'reql') + '.js');
 
 	try {
 		extendModel = require(filepath);

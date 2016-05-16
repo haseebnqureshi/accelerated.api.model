@@ -1,0 +1,14 @@
+{
+	"table_name": "example",
+	"primary_key": "example_id",
+	"whitelist": {
+		"default": [
+			"example_id",
+			"example_email",
+			"example_password",
+			"example_firstname",
+			"example_lastname"
+		]
+	},
+	"durability": "hard"
+}

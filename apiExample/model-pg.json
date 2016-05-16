@@ -1,0 +1,20 @@
+{
+	"table_name": "example",
+	"primary_key": "example_id",
+	"whitelist": {
+		"default": [
+			"example_id",
+			"example_email",
+			"example_password",
+			"example_firstname",
+			"example_lastname"
+		]
+	},
+	"columns": [
+		["example_id", "bigIncrements"],
+		["example_email", "string"],
+		["example_password", "string"],
+		["example_firstname", "string"],
+		["example_lastname", "string"]
+	]
+}
