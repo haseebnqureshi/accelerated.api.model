@@ -16,7 +16,7 @@ By default, this module loads the appropriate database credentials for both Post
 "PG_PASSWORD": "root"
 "PG_DATABASE": "api"
 "REQL_HOST": "localhost"
-"REQL_PORT": "29015"
+"REQL_PORT": "28015"
 "REQL_DB": "test"
 ```
 

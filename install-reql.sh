@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Make sure to run this script as sudo su!
+# This requires install path pointing back to app directory!
+
+cd $1
 
 export DEBIAN_FRONTEND=noninteractive
 export SERVER_NAME=accelerated

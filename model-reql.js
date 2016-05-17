@@ -21,7 +21,7 @@ module.exports = function(model, express, app, models, settings) {
 	var query = function(connectionCallback) {
 		r.connect({
 			host: (process.env.RETHINKDB_HOST || 'localhost'),
-			port: (process.env.RETHINKDB_PORT || 29015),
+			port: (process.env.RETHINKDB_PORT || 28015),
 			db: (process.env.RETHINKDB_DB || 'test')
 		}, function(err, connection) {
 			if (err) {
