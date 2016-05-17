@@ -96,7 +96,7 @@ module.exports = function(model, express, app, models, settings) {
 	var filepath = path.join(__dirname, 'model-' + (process.env.DB_CLIENT || 'reql') + '.js');
 
 	try {
-		extendModel = require(filepath);
+		extendModel = require(filepath)(settings);
 	}
 	catch(err) {
 		throw err;
@@ -104,7 +104,7 @@ module.exports = function(model, express, app, models, settings) {
 
     //call model's _setup if argument is passed 
     if (_.indexOf(process.argv, 'setup') > -1) {
-        extendModel(model, express, app, models, settings)._setup();
+        extendModel(model, express, app, models)._setup();
     }
 
 	/*------
