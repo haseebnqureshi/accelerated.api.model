@@ -111,6 +111,6 @@ module.exports = function(model, express, app, models, settings) {
 	Returning Model Extension Callback
 	------------*/
 
-	return extendModel;
+	return extendModel(model, express, app, models);
 
 };
