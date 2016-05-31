@@ -1,7 +1,7 @@
 module.exports = (function() {
 
 	//loading our model module
-    var module = new require('accelerated.api.model');
+    var module = new require('accelerated.api.model')();
 
     //then customizing it to our current resource
     module.setSettings({

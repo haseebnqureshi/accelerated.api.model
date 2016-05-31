@@ -1,4 +1,4 @@
-module.exports = (function() {
+module.exports = function() {
 
     //loading accelerated's module with your appropriate settings
     var module = new require('accelerated.api.module')({
@@ -20,4 +20,4 @@ module.exports = (function() {
     //returning for use by accelerated.api
     return module;
 
-})();
+};
