@@ -7,8 +7,11 @@ module.exports = (function() {
     module.setSettings({
     	key: 'example',
     	name: 'Example Modeling',
-    	schemaFilepath: __dirname + '/model-reql.json'
-    	// schemaFilepath: __dirname + '/model-pg.json'
+        schemaFilepath: __dirname + '/model-' + (process.env.DB_CLIENT || 'pg') + '.json',
+        filterModel: function(model, helpers, settings, _, logger) {
+            logger.debug({ model: model });
+            return model;
+        }
     });
 
     //then returning for use by accelerated.api

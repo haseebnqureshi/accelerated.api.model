@@ -10,9 +10,10 @@ module.exports = function(settings) {
 		var pg = require('pg');
 		var types = require('pg').types;
 		var path = require('path');
+		var helpers = {};
 
 		//@see http://knexjs.org for knex query builder documentation
-		var knex = require('knex')({ client: 'pg' });
+		helpers.knex = require('knex')({ client: 'pg' });
 
 		/*------
 		Helpers
@@ -34,7 +35,7 @@ module.exports = function(settings) {
 		that gets used to execute queries against.
 		*/
 
-		var getConnectionString = function() {
+		helpers.getConnectionString = function() {
 			return 'postgres://'
 				+ (process.env.PG_USER || 'root') + ':'
 				+ (process.env.PG_PASSWORD || 'root') + '@'
@@ -49,8 +50,8 @@ module.exports = function(settings) {
 		building.
 		*/
 
-		var query = function(statement, onSuccess, onError) {
-			pg.connect(getConnectionString(), function(err, client, done) {
+		helpers.query = function(statement, onSuccess, onError) {
+			pg.connect(helpers.getConnectionString(), function(err, client, done) {
 				if (err) { throw err; }
 
 				logger.info(statement);
@@ -79,7 +80,7 @@ module.exports = function(settings) {
 		safely parse our arguments, without any extra code.
 		*/
 
-		var whitelist = function(args, scenario) {
+		helpers.whitelist = function(args, scenario) {
 
 			//loading our specified whitelist array
 			var keys = settings.schema.whitelist[scenario];
@@ -105,7 +106,7 @@ module.exports = function(settings) {
 		for easy model-wide rule-defining returning rules.
 		*/
 
-		var safeReturning = function(scenario) {
+		helpers.safeReturning = function(scenario) {
 			switch (scenario) {
 				default:
 					return '*';
@@ -123,7 +124,7 @@ module.exports = function(settings) {
 				console.log('[_setup] Conditionally creating table: "' + settings.schema.table_name + '"');
 
 				//crafting query
-				var statement = knex.settings.schema
+				var statement = helpers.knex.settings.schema
 					.createTableIfNotExists(settings.schema.table_name, function(table) {
 
 						//iterates through columns
@@ -138,7 +139,7 @@ module.exports = function(settings) {
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 
 					console.log('[_setup] Table: "' + settings.schema.table_name + '" is verified to exist');
 
@@ -159,14 +160,14 @@ module.exports = function(settings) {
 			create: function(args, onSuccess, onError) {
 
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
-					.insert(whitelist(args))
-					.returning(safeReturning())
+					.insert(helpers.whitelist(args))
+					.returning(helpers.safeReturning())
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess(rows);
 					}
@@ -180,14 +181,14 @@ module.exports = function(settings) {
 			delete: function(id, onSuccess, onError) {
 
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
 					.where(settings.schema.primary_key, id)
 					.delete()
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess();
 					}
@@ -201,14 +202,14 @@ module.exports = function(settings) {
 			deleteWhere: function(where, onSuccess, onError) {
 				
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
-					.where(whitelist(where))
+					.where(helpers.whitelist(where))
 					.delete()
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess();
 					}
@@ -222,15 +223,15 @@ module.exports = function(settings) {
 			get: function(id, onSuccess, onError) {
 				
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
 					.where(settings.schema.primary_key, id)
 					.orderBy(settings.schema.primary_key, 'desc')
-					.returning(safeReturning())
+					.returning(helpers.safeReturning())
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess(rows);
 					}
@@ -244,14 +245,14 @@ module.exports = function(settings) {
 			getAll: function(onSuccess, onError) {
 				
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
 					.orderBy(settings.schema.primary_key, 'desc')
-					.returning(safeReturning())
+					.returning(helpers.safeReturning())
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess(rows);
 					}
@@ -265,15 +266,15 @@ module.exports = function(settings) {
 			getAllWhere: function(where, onSuccess, onError) {
 				
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
-					.where(whitelist(where))
+					.where(helpers.whitelist(where))
 					.orderBy(settings.schema.primary_key, 'desc')
-					.returning(safeReturning())
+					.returning(helpers.safeReturning())
 					.toString();
 
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess(rows);
 					}
@@ -287,15 +288,15 @@ module.exports = function(settings) {
 			update: function(id, args, onSuccess, onError) {
 
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
 					.where(settings.schema.primary_key, id)
 					.update(args)
-					.returning(safeReturning())
+					.returning(helpers.safeReturning())
 					.toString();
 			
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess(rows);
 					}
@@ -309,15 +310,15 @@ module.exports = function(settings) {
 			updateWhere: function(where, args, onSuccess, onError) {
 
 				//crafting query
-				var statement = knex
+				var statement = helpers.knex
 					.table(settings.schema.table_name)
-					.where(whitelist(where))
-					.update(whitelist(args))
-					.returning(safeReturning())
+					.where(helpers.whitelist(where))
+					.update(helpers.whitelist(args))
+					.returning(helpers.safeReturning())
 					.toString();
 				
 				//executing query
-				query(statement, function(rows) {
+				helpers.query(statement, function(rows) {
 					if (onSuccess) {
 						return onSuccess(rows);
 					}
@@ -329,6 +330,19 @@ module.exports = function(settings) {
 			}
 
 		};
+
+		/*------
+		Filtering Model -- allowing any callback to modify default CRUD modeling
+		------------*/
+
+		if (settings.filterModel) {
+			try {
+				model = settings.filterModel(model, helpers, settings, _, logger);
+			}
+			catch(err) {
+				logger.warn('Failed to filter model!');
+			}
+		}
 
 		/*------
 		Returning Model

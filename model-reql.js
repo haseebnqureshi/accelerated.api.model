@@ -7,8 +7,10 @@ module.exports = function(settings) {
 		------------*/
 
 		var _ = require('underscore');
-		var r = require('rethinkdb');
 		var path = require('path');
+		var logger = app.get('logger');
+		var helpers = {};
+		helpers.r = require('rethinkdb');
 
 		/*------
 		Helpers
@@ -20,8 +22,8 @@ module.exports = function(settings) {
 		and .run(connection, callback) in your queries.
 		*/
 
-		var query = function(connectionCallback) {
-			r.connect({
+		helpers.query = function(connectionCallback) {
+			helpers.r.connect({
 				host: (process.env.RETHINKDB_HOST || 'localhost'),
 				port: (process.env.RETHINKDB_PORT || 28015),
 				db: (process.env.RETHINKDB_DB || 'test')
@@ -40,7 +42,7 @@ module.exports = function(settings) {
 		safely parse our arguments, without any extra code.
 		*/
 
-		var whitelist = function(args, scenario) {
+		helpers.whitelist = function(args, scenario) {
 
 			//loading our specified whitelist array
 			var keys = settings.schema.whitelist[scenario];
@@ -72,8 +74,8 @@ module.exports = function(settings) {
 				console.log('[_setup] Conditionally creating table: "' + settings.schema.table_name + '"');
 
 				//list all tables and see if our table has been created
-				query(function(connection) {
-					r.tableList()
+				helpers.query(function(connection) {
+					helpers.r.tableList()
 						.run(connection, function(err, result) {
 							var tableExists = _.indexOf(result, settings.schema.table_name) > -1 ? true : false;
 
@@ -82,7 +84,7 @@ module.exports = function(settings) {
 
 								console.log('[_setup] Table: "' + settings.schema.table_name + '" does not exist');
 
-								r.tableCreate(settings.schema.table_name, {
+								helpers.r.tableCreate(settings.schema.table_name, {
 									primaryKey: settings.schema.primary_key || 'id',
 									durability: settings.schema.durability || 'hard'
 								})
@@ -115,9 +117,9 @@ module.exports = function(settings) {
 			},
 
 			create: function(args, onSuccess, onError) {
-				query(function(connection) {
-					r.table(settings.schema.table_name)
-						.insert(whitelist(args), {
+				helpers.query(function(connection) {
+					helpers.r.table(settings.schema.table_name)
+						.insert(helpers.whitelist(args), {
 							durability: 'hard',
 							returnChanges: 'always',
 							conflict: 'error'
@@ -140,14 +142,14 @@ module.exports = function(settings) {
 			},
 
 			delete: function(id, onSuccess, onError) {
-				query(function(connection) {
+				helpers.query(function(connection) {
 
 					//ensuring filter is run with primary_key and vlue
 					var where = {};
 					where[settings.schema.primary_key] = id;
 
 					//executing query
-					r.table(settings.schema.table_name)
+					helpers.r.table(settings.schema.table_name)
 						.filter(where)
 						.delete({
 							durability: 'hard',
@@ -170,9 +172,9 @@ module.exports = function(settings) {
 			},
 
 			deleteWhere: function(where, onSuccess, onError) {
-				query(function(connection) {
-					r.table(settings.schema.table_name)
-						.filter(whitelist(where))
+				helpers.query(function(connection) {
+					helpers.r.table(settings.schema.table_name)
+						.filter(helpers.whitelist(where))
 						.delete({
 							durability: 'hard',
 							returnChanges: false,
@@ -194,21 +196,21 @@ module.exports = function(settings) {
 			},
 
 			get: function(id, onSuccess, onError) {
-				query(function(connection) {
+				helpers.query(function(connection) {
 
 					//ensuring filter is run with primary_key and vlue
 					var where = {};
 					where[settings.schema.primary_key] = id;
 
 					//executing query
-					r.table(settings.schema.table_name)
+					helpers.r.table(settings.schema.table_name)
 						.filter(where)
 						.run(connection, function(err, cursor) {
 							if (err && onError) { 
 								return onError(err);
 							}
 							if (onSuccess) {
-								cursor.toArray(function(err, rows) {
+								cursor.r.toArray(function(err, rows) {
 									if (err && onError) { 
 										return onError(err);
 									}
@@ -220,14 +222,14 @@ module.exports = function(settings) {
 			},
 
 			getAll: function(onSuccess, onError) {
-				query(function(connection) {
-					r.table(settings.schema.table_name)
+				helpers.query(function(connection) {
+					helpers.r.table(settings.schema.table_name)
 						.run(connection, function(err, cursor) {
 							if (err && onError) { 
 								return onError(err);
 							}
 							if (onSuccess) {
-								cursor.toArray(function(err, rows) {
+								cursor.r.toArray(function(err, rows) {
 									if (err && onError) { 
 										return onError(err);
 									}
@@ -239,15 +241,15 @@ module.exports = function(settings) {
 			},
 
 			getAllWhere: function(where, onSuccess, onError) {
-				query(function(connection) {
-					r.table(settings.schema.table_name)
-						.filter(whitelist(where))
+				helpers.query(function(connection) {
+					helpers.r.table(settings.schema.table_name)
+						.filter(helpers.whitelist(where))
 						.run(connection, function(err, cursor) {
 							if (err && onError) { 
 								return onError(err);
 							}
 							if (onSuccess) {
-								cursor.toArray(function(err, rows) {
+								cursor.r.toArray(function(err, rows) {
 									if (err && onError) { 
 										return onError(err);
 									}
@@ -259,16 +261,16 @@ module.exports = function(settings) {
 			},
 
 			update: function(id, args, onSuccess, onError) {
-				query(function(connection) {
+				helpers.query(function(connection) {
 
 					//ensuring filter is run with primary_key and vlue
 					var where = {};
 					where[settings.schema.primary_key] = id;
 
 					//executing query
-					r.table(settings.schema.table_name)
+					helpers.r.table(settings.schema.table_name)
 						.filter(where)
-						.update(whitelist(args), {
+						.update(helpers.whitelist(args), {
 							durability: 'hard',
 							returnChanges: 'always'
 						})
@@ -288,10 +290,10 @@ module.exports = function(settings) {
 			},
 
 			updateWhere: function(where, args, onSuccess, onError) {
-				query(function(connection) {
-					r.table(settings.schema.table_name)
-						.filter(whitelist(where))
-						.update(whitelist(args), {
+				helpers.query(function(connection) {
+					helpers.r.table(settings.schema.table_name)
+						.filter(helpers.whitelist(where))
+						.update(helpers.whitelist(args), {
 							durability: 'hard',
 							returnChanges: 'always'
 						})
@@ -313,6 +315,19 @@ module.exports = function(settings) {
 			}
 
 		};
+
+		/*------
+		Filtering Model -- allowing any callback to modify default CRUD modeling
+		------------*/
+
+		if (settings.filterModel) {
+			try {
+				model = settings.filterModel(model, helpers, settings, _, logger);
+			}
+			catch(err) {
+				logger.warn('Failed to filter model!');
+			}
+		}
 
 		/*------
 		Returning Model
