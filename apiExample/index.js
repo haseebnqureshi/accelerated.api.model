@@ -11,6 +11,10 @@ module.exports = (function() {
         filterModel: function(model, helpers, settings, _, logger) {
             logger.debug({ model: model });
             return model;
+        },
+        filterRoutes: function(routes, model, models, settings, _, logger) {
+            logger.debug({ routes: routes });
+            return routes;
         }
     });
 

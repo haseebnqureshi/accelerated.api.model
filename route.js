@@ -1,27 +1,19 @@
 module.exports = function(express, app, models, settings) {
 
-	/*------
-	Dependencies
-	------------*/
-
-	var model = models[settings.key];
-
-	/*------
-	Helpers
-	------------*/
-
+	var _ = require('underscore');
 	var logger = app.get('logger');
+	var model = models[settings.key];
+	var routes = {};
 
 	/*------
 	Routes
+	All routes get stored into an object. This allows for later
+	manipulation of routes. Each "route" is an Express middleware
+	function, accepting req and res objects.
 	------------*/
 
-	var router = express.Router();
-
-	router.route('/')
-
-		//create new resource
-		.post(function(req, res) {
+	routes['/'] = {
+		post: function(req, res) {
 			logger.debug('req.body', req.body);
 			model.create(req.body, function(rows) {
 				logger.debug('rows', rows);
@@ -35,10 +27,8 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				});
 			});
-		})
-
-		//getting collection of resource
-		.get(function(req, res) {
+		},
+		get: function(req, res) {
 			model.getAll(function(rows) {
 				logger.debug('rows', rows);
 				return res.status(200).send({
@@ -51,12 +41,11 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				});
 			});
-		});
+		}
+	};
 
-	router.route('/:resource_id')
-
-		//getting individual resource by id
-		.get(function(req, res) {
+	routes['/:resource_id'] = {
+		get: function(req, res) {
 			logger.debug('req.params', req.params);
 
 			model.get(req.params.resource_id, function(rows) {
@@ -74,10 +63,8 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				})
 			});
-		})
-
-		//updating individual resource by id
-		.put(function(req, res) {
+		},
+		put: function(req, res) {
 			logger.debug('req.params', req.params);
 			logger.debug('req.body', req.body);
 
@@ -93,10 +80,9 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				})
 			});
-		})
 
-		//deleting individual resource by id
-		.delete(function(req, res) {
+		},
+		delete: function(req, res) {
 			logger.debug('req.params', req.params);
 
 			model.delete(req.params.resource_id, function() {
@@ -110,11 +96,11 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				})
 			});
-		});
+		}
+	};
 
-	router.route('/:property/:value')
-
-		.get(function(req, res) {
+	routes['/:property/:value'] = {
+		get: function(req, res) {
 			logger.debug('req.params', req.params);
 
 			//constructing our where object
@@ -138,9 +124,8 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				})
 			});
-		})
-
-		.put(function(req, res) {
+		},
+		put: function(req, res) {
 			logger.debug('req.params', req.params);
 			logger.debug('req.body', req.body);
 
@@ -162,9 +147,8 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				})
 			});
-		})
-
-		.delete(function(req, res) {
+		},
+		delete: function(req, res) {
 			logger.debug('req.params', req.params);
 
 			//constructing our where object
@@ -184,9 +168,50 @@ module.exports = function(express, app, models, settings) {
 					error: err
 				})
 			});
-		});
+		}
+	};
 
+	/*------
+	Filtering Routes -- allowing any callback to modify default routing
+	------------*/
+
+	if (settings.filterRoutes) {
+		try {
+			routes = settings.filterRoutes(routes, model, models, settings, _, logger, app, express);
+		}
+		catch(err) {
+			logger.warn('Failed to filter routes!');
+		}
+	}
+
+
+	/*------
+	Filling Routes into our Router
+	------------*/
+
+	var router = express.Router();
+	_.each(routes, function(route, path) {
+		_.each(route, function(func, method) {
+			try {
+				router.route(path)[method](func);
+			}
+			catch(err) {
+				logger.warn('Something went wrong in adding route!', {
+					path: path,
+					method: method
+				});
+			}
+		});
+	});
+
+
+	/*------
+	Mounting Router onto App
+	------------*/
+
+	// we're opining on prefixing everything here with our key
 	app.use('/' + settings.key, router);
+
 
 	/*------
 	Returning App (ensuring app waterfalls)
