@@ -124,7 +124,7 @@ module.exports = function(settings) {
 				console.log('[_setup] Conditionally creating table: "' + settings.schema.table_name + '"');
 
 				//crafting query
-				var statement = helpers.knex.settings.schema
+				var statement = helpers.knex.schema
 					.createTableIfNotExists(settings.schema.table_name, function(table) {
 
 						//iterates through columns
