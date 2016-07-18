@@ -120,11 +120,15 @@ module.exports = function(settings) {
 		*/
 
 		helpers.filterTimestamp = function(suffix, args) {
-			var key = settings.schema.table_name + suffix;
 			try {
-				if (settings.schema.columns[key]) {
-					args[key] = new Date().getTime() / 1000;
-				}
+				var key = settings.schema.table_name + suffix;
+				_.each(settings.schema.columns, function(columnArr) {
+					var name = columnArr[0];
+					var type = columnArr[1];
+					if (name == key && type.match('integer')) {
+						args[key] = new Date().getTime() / 1000;
+					}
+				});
 			}
 			catch (err) { }
 			return args;
