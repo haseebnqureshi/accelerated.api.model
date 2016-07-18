@@ -125,7 +125,13 @@ module.exports = function(settings) {
 				_.each(settings.schema.columns, function(columnArr) {
 					var name = columnArr[0];
 					var type = columnArr[1];
-					if (name == key && type.match('integer')) {
+					if (name == key && type.match(/integer/i)) {
+						args[key] = Math.round(new Date().getTime() / 1000);
+					}
+					else if (type.match(/decimal/i)) {
+						args[key] = new Date().getTime() / 1000;
+					}
+					else if (type.match(/float/i)) {
 						args[key] = new Date().getTime() / 1000;
 					}
 				});
