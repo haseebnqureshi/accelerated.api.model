@@ -1,6 +1,6 @@
 {
   "name": "accelerated.api.model",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Model template for accelerated.api w/full CRUD abilities.",
   "main": "index.js",
   "scripts": {

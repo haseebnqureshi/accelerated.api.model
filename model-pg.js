@@ -113,6 +113,23 @@ module.exports = function(settings) {
 			}
 		};
 
+
+		/* 
+		General helpers for modifying timestamps showing when resources have been
+		created and modified.
+		*/
+
+		helpers.filterTimestamp = function(suffix, args) {
+			var key = settings.schema.table_name + suffix;
+			try {
+				if (settings.schema.columns[key]) {
+					args[key] = new Date().getTime() / 1000;
+				}
+			}
+			catch (err) { }
+			return args;
+		};
+
 		/*------
 		Defining Model
 		------------*/
@@ -158,6 +175,8 @@ module.exports = function(settings) {
 			},
 
 			create: function(args, onSuccess, onError) {
+
+				args = helpers.filterTimestamp('_created', args);
 
 				//crafting query
 				var statement = helpers.knex
@@ -287,6 +306,8 @@ module.exports = function(settings) {
 
 			update: function(id, args, onSuccess, onError) {
 
+				args = helpers.filterTimestamp('_updated', args);
+
 				//crafting query
 				var statement = helpers.knex
 					.table(settings.schema.table_name)
@@ -308,6 +329,8 @@ module.exports = function(settings) {
 			},
 
 			updateWhere: function(where, args, onSuccess, onError) {
+
+				args = helpers.filterTimestamp('_updated', args);
 
 				//crafting query
 				var statement = helpers.knex
