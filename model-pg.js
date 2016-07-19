@@ -140,6 +140,28 @@ module.exports = function(settings) {
 			return args;
 		};
 
+		/*
+		Safely handling JSON data types, ensuring there's at least an empty
+		{} so pulling nested information won't throw errors later.
+		*/
+
+		helpers.handleJSON = function(rows) {
+			return _.map(rows, function(row) {
+				_.each(settings.schema.columns, function(columnArr) {
+					var name = columnArr[0];
+					var type = columnArr[1];
+					switch(type) {
+						case 'json':
+							if (row[name] === null) {
+								row[name] = {};
+							}
+						break;
+					}
+				});
+				return row;
+			});
+		};
+
 		/*------
 		Defining Model
 		------------*/
@@ -171,7 +193,7 @@ module.exports = function(settings) {
 					console.log('[_setup] Table: "' + settings.schema.table_name + '" is verified to exist');
 
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 
@@ -198,7 +220,7 @@ module.exports = function(settings) {
 				//executing query
 				helpers.query(statement, function(rows) {
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 					if (err && onError) {
@@ -262,7 +284,7 @@ module.exports = function(settings) {
 				//executing query
 				helpers.query(statement, function(rows) {
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 					if (err && onError) {
@@ -283,7 +305,7 @@ module.exports = function(settings) {
 				//executing query
 				helpers.query(statement, function(rows) {
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 					if (err && onError) {
@@ -305,7 +327,7 @@ module.exports = function(settings) {
 				//executing query
 				helpers.query(statement, function(rows) {
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 					if (err && onError) {
@@ -329,7 +351,7 @@ module.exports = function(settings) {
 				//executing query
 				helpers.query(statement, function(rows) {
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 					if (err && onError) {
@@ -353,7 +375,7 @@ module.exports = function(settings) {
 				//executing query
 				helpers.query(statement, function(rows) {
 					if (onSuccess) {
-						return onSuccess(rows);
+						return onSuccess(helpers.handleJSON(rows));
 					}
 				}, function(err) {
 					if (err && onError) {
